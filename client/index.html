@@ -8,7 +8,8 @@
         import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
         const socket = io({
             auth: {
-                serverOffset: 0
+                serverOffset: 0,
+                username: 'marti'
             }
         }
             
@@ -18,11 +19,30 @@
         const input = document.getElementById('input')
         const messages = document.getElementById('messages')
         const username = document.getElementById('username')
+        const usersConnected = document.getElementById('usersConnected')
 
         socket.on('chat message', (message, username, serverOffset) => {
             const item = `<li>${username}: ${message}</li>`;
             messages.insertAdjacentHTML('beforeend', item)
             socket.auth.serverOffset = serverOffset;
+        })
+
+        socket.on('users', (users) => {
+            var secondChild = usersConnected.children[1]; // Obtén el segundo hijo
+
+            while (secondChild) {
+                usersConnected.removeChild(secondChild);
+                secondChild = usersConnected.children[1]; // Obtén el nuevo segundo hijo
+            }
+            users.forEach((user) => {
+                const item = `<button>${user.username}</button>`;
+                usersConnected.insertAdjacentHTML('beforeend', item)
+            })
+        })
+
+        socket.on('user connected', (user) => {
+            const item = `<li>${user.username}</li>`;
+            usersConnected.insertAdjacentHTML('beforeend', item)
         })
 
         form.addEventListener('submit', (e) => {
@@ -31,6 +51,17 @@
             if(input.value){
                 socket.emit('chat message', input.value, username.value)
                 input.value = ''
+            }
+        })
+
+        form2.addEventListener('submit', (e) => {
+            e.preventDefault()
+
+            if(input.value){
+                socket.emit("private message", {
+                content,
+                to: 'KJwYJ9-3e2Wx4A-WAAAB"',
+                });
             }
         })
     </script>
@@ -106,17 +137,39 @@
             background: black;
             color: #FFF;
         }
+
+        #usersConnected{
+            height: 100%;
+            background-color: red;
+            width: 200px;
+            display: flex;
+            justify-content: start;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #sectionsContent{
+            display: flex;
+            flex-direction: row;
+        }
+
     </style>
 </head>
 
 <body>
-    <section id="chat">
-        <ul id="messages"></ul>
-        <form id="form">
-            <input type="text" name="message" id="input" placeholder="Type a message" autocomplete="off" />
-            <button type="submit">Enviar</button>
-        </form>
-    </section>
+    <div id="sectionsContent">
+        <section id="usersConnected">
+            <h1>USERS</h1>
+        </section>
+        <section id="chat">
+            <ul id="messages"></ul>
+            <form id="form">
+                <input type="text" name="message" id="input" placeholder="Type a message" autocomplete="off" />
+                <button type="submit">Enviar</button>
+            </form>
+        </section>
+    </div>
+    
     <input type="text" id="username" placeholder="defaultUser" />
 </body>
 
